@@ -67,15 +67,31 @@ class ReflexAgent(Agent):
         Print out these variables to see what you're getting, then combine them
         to create a masterful evaluation function.
         """
-        # Useful information you can extract from a GameState (pacman.py)
         successorGameState = currentGameState.generatePacmanSuccessor(action)
-        newPos = successorGameState.getPacmanPosition()
+        newPosition = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
-        newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        successorGameStateScore = successorGameState.getScore()
+        if successorGameState.isLose():
+            return -abs(successorGameStateScore)
+
+        if successorGameState.isWin():
+            return successorGameStateScore
+        else:
+            _, distanceToClosestDot = findClosestDot(newFood.asList(), newPosition)
+            return 1/(distanceToClosestDot) + successorGameStateScore
+
+def findClosestDot(dots: tuple, currentPosition): # Utility function for finding closest dot used by evaluationFunction of ReflexAgent
+    positionOfClosestDot = None
+    distanceToClosestDot = None
+    for dot in dots:
+        distance = manhattanDistance(currentPosition, dot)
+        
+        if positionOfClosestDot == None or distance < distanceToClosestDot:
+            distanceToClosestDot = distance
+            positionOfClosestDot = dot
+
+    return positionOfClosestDot, distanceToClosestDot
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
