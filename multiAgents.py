@@ -81,7 +81,10 @@ class ReflexAgent(Agent):
             _, distanceToClosestDot = findClosestDot(newFood.asList(), newPosition)
             return 1/(distanceToClosestDot) + successorGameStateScore
 
-def findClosestDot(dots: tuple, currentPosition): # Utility function for finding closest dot used by evaluationFunction of ReflexAgent
+def findClosestDot(dots: tuple, currentPosition):
+    """
+    Utility function for finding closest dot used by evaluationFunction of ReflexAgent
+    """
     positionOfClosestDot = None
     distanceToClosestDot = None
     for dot in dots:
@@ -133,44 +136,54 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns the minimax action from the current gameState using self.depth
         and self.evaluationFunction.
         """
-        _, bestAction = self.minimaxDecision(gameState, self.depth, 0);
-        return bestAction
+        _, optimalAction = self.minimaxDecision(gameState, self.depth, 0)
+        return optimalAction
 
     def reachedTerminalState(self, gameState, depth):
         return gameState.isWin() or gameState.isLose() or depth == 0
 
     def minimaxDecision(self, gameState, depth, agent):
-        if agent == 0:
-            move = self.minimax(gameState, agent, depth, True)
-        else:
-            move = self.minimax(gameState, agent, depth, False)
+        return self.findMax(gameState, agent, depth) if agent == 0 else self.findMin(gameState, agent, depth)
 
-        return move
-
-    def minimax(self, gameState, agent, depth, maximizingAgent):
+    def findMax(self, gameState, agent, depth):
         if self.reachedTerminalState(gameState, depth):
             return self.evaluationFunction(gameState), Directions.STOP
 
-        bestUtilityValueForAgent = None
-        bestActionForAgent = Directions.STOP
-
+        maxUtilityValue = None
         for action in gameState.getLegalActions(agent):
             successorGameState = gameState.generateSuccessor(agent, action)
-            if agent == gameState.getNumAgents() - 1:
-                utilityValue, _ = self.minimaxDecision(successorGameState, depth - 1, 0)
-            else:
-                utilityValue, _ = self.minimaxDecision(successorGameState, depth, agent + 1)
 
-            if maximizingAgent:
-                if bestUtilityValueForAgent == None or utilityValue > bestUtilityValueForAgent:
-                    bestActionForAgent = action
-                    bestUtilityValueForAgent = utilityValue
-            else:
-                if bestUtilityValueForAgent == None or utilityValue < bestUtilityValueForAgent:
-                    bestActionForAgent = action
-                    bestUtilityValueForAgent = utilityValue
+            utilityValue, _ = \
+            self.minimaxDecision(successorGameState, depth - 1, 0) \
+            if agent == gameState.getNumAgents() - 1 \
+            else \
+            self.minimaxDecision(successorGameState, depth, agent + 1)
 
-        return bestUtilityValueForAgent, bestActionForAgent
+            if maxUtilityValue == None or utilityValue > maxUtilityValue:
+                maxAction = action
+                maxUtilityValue = utilityValue
+
+        return maxUtilityValue, maxAction
+
+    def findMin(self, gameState, agent, depth):
+        if self.reachedTerminalState(gameState, depth):
+            return self.evaluationFunction(gameState), Directions.STOP
+
+        minUtilityValue = None
+        for action in gameState.getLegalActions(agent):
+            successorGameState = gameState.generateSuccessor(agent, action)
+
+            utilityValue, _ = \
+            self.minimaxDecision(successorGameState, depth - 1, 0) \
+            if agent == gameState.getNumAgents() - 1 \
+            else \
+            self.minimaxDecision(successorGameState, depth, agent + 1)
+
+            if minUtilityValue == None or utilityValue < minUtilityValue:
+                minAction = action
+                minUtilityValue = utilityValue
+
+        return minUtilityValue, minAction
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -181,56 +194,66 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
-        _, bestAction = self.minimaxDecision(gameState, self.depth, 0, None, None);
-        return bestAction
+        _, optimalAction = self.minimaxDecision(gameState, self.depth, 0, None, None);
+        return optimalAction
 
     def reachedTerminalState(self, gameState, depth):
         return gameState.isWin() or gameState.isLose() or depth == 0
 
     def minimaxDecision(self, gameState, depth, agent, alpha, beta):
-        if agent == 0:
-            move = self.minimax(gameState, agent, depth, True, alpha, beta)
-        else:
-            move = self.minimax(gameState, agent, depth, False, alpha, beta)
+        return self.findMax(gameState, agent, depth, alpha, beta) if agent == 0 else self.findMin(gameState, agent, depth, alpha, beta)
 
-        return move
-
-    def minimax(self, gameState, agent, depth, maximizingAgent, alpha, beta):
+    def findMax(self, gameState, agent, depth, alpha, beta):
         if self.reachedTerminalState(gameState, depth):
             return self.evaluationFunction(gameState), Directions.STOP
 
-        bestUtilityValueForAgent = None
-        bestActionForAgent = Directions.STOP
-
+        maxUtilityValue = None
         for action in gameState.getLegalActions(agent):
             successorGameState = gameState.generateSuccessor(agent, action)
-            if agent == gameState.getNumAgents() - 1:
-                utilityValue, _ = self.minimaxDecision(successorGameState, depth - 1, 0, alpha, beta)
-            else:
-                utilityValue, _ = self.minimaxDecision(successorGameState, depth, agent + 1, alpha, beta)
 
-            if maximizingAgent:
-                if bestUtilityValueForAgent == None or utilityValue > bestUtilityValueForAgent:
-                    bestActionForAgent = action
-                    bestUtilityValueForAgent = utilityValue
+            utilityValue, _ = \
+            self.minimaxDecision(successorGameState, depth - 1, 0, alpha, beta) \
+            if agent == gameState.getNumAgents() - 1 \
+            else \
+            self.minimaxDecision(successorGameState, depth, agent + 1, alpha, beta)
 
-                if beta != None and bestUtilityValueForAgent > beta:
-                    return bestUtilityValueForAgent, bestActionForAgent
+            if maxUtilityValue == None or utilityValue > maxUtilityValue:
+                maxAction = action
+                maxUtilityValue = utilityValue
 
-                if alpha == None or bestUtilityValueForAgent > alpha:
-                    alpha = bestUtilityValueForAgent
-            else:
-                if bestUtilityValueForAgent == None or utilityValue < bestUtilityValueForAgent:
-                    bestActionForAgent = action
-                    bestUtilityValueForAgent = utilityValue
+            if beta != None and maxUtilityValue > beta:
+                break
 
-                if alpha != None and bestUtilityValueForAgent < alpha:
-                    return bestUtilityValueForAgent, bestActionForAgent
+            if alpha == None or maxUtilityValue > alpha:
+                alpha = maxUtilityValue
 
-                if beta == None or bestUtilityValueForAgent < beta:
-                    beta = bestUtilityValueForAgent
+        return maxUtilityValue, maxAction
 
-        return bestUtilityValueForAgent, bestActionForAgent
+    def findMin(self, gameState, agent, depth, alpha, beta):
+        if self.reachedTerminalState(gameState, depth):
+            return self.evaluationFunction(gameState), Directions.STOP
+
+        minUtilityValue = None
+        for action in gameState.getLegalActions(agent):
+            successorGameState = gameState.generateSuccessor(agent, action)
+
+            utilityValue, _ = \
+            self.minimaxDecision(successorGameState, depth - 1, 0, alpha, beta) \
+            if agent == gameState.getNumAgents() - 1 \
+            else \
+            self.minimaxDecision(successorGameState, depth, agent + 1, alpha, beta)
+
+            if minUtilityValue == None or utilityValue < minUtilityValue:
+                minAction = action
+                minUtilityValue = utilityValue
+
+            if alpha != None and minUtilityValue < alpha:
+                break
+
+            if beta == None or minUtilityValue < beta:
+                beta = minUtilityValue
+
+        return minUtilityValue, minAction
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -240,12 +263,76 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     def getAction(self, gameState: GameState):
         """
         Returns the expectimax action using self.depth and self.evaluationFunction
-
-        All ghosts should be modeled as choosing uniformly at random from their
-        legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        _, action = self.expectimaxDecision(gameState, depth = self.depth, agent = 0)
+        return action
+
+    def expectimaxDecision(self, gameState, depth, agent):
+        return self.findMax(gameState, agent, depth) if agent == 0 else self.findChance(gameState, agent, depth)
+
+    def reachedTerminalState(self, gameState, depth):
+        return gameState.isWin() or gameState.isLose() or depth == 0
+
+    def findMax(self, gameState, agent, depth):
+        if self.reachedTerminalState(gameState, depth):
+            return self.evaluationFunction(gameState), Directions.STOP
+
+        maxUtilityValue = None
+        for action in gameState.getLegalActions(agent):
+            successorGameState = gameState.generateSuccessor(agent, action)
+
+            utilityValue, _ = \
+            self.expectimaxDecision(successorGameState, depth - 1, 0) \
+            if agent == gameState.getNumAgents() - 1 \
+            else \
+            self.expectimaxDecision(successorGameState, depth, agent + 1)
+
+            if maxUtilityValue == None or utilityValue > maxUtilityValue:
+                maxAction = action
+                maxUtilityValue = utilityValue
+
+        return maxUtilityValue, maxAction
+
+    def findMin(self, gameState, agent, depth):
+        if self.reachedTerminalState(gameState, depth):
+            return self.evaluationFunction(gameState), Directions.STOP
+
+        minUtilityValue = None
+        for action in gameState.getLegalActions(agent):
+            successorGameState = gameState.generateSuccessor(agent, action)
+
+            utilityValue, _ = \
+            self.expectimaxDecision(successorGameState, depth - 1, 0) \
+            if agent == gameState.getNumAgents() - 1 \
+            else \
+            self.expectimaxDecision(successorGameState, depth, agent + 1)
+
+            if minUtilityValue == None or utilityValue < minUtilityValue:
+                minAction = action
+                minUtilityValue  = utilityValue
+
+        return minUtilityValue, minAction
+
+
+    def findChance(self, gameState, agent, depth):
+        if self.reachedTerminalState(gameState, depth):
+            return self.evaluationFunction(gameState), Directions.STOP
+
+        utilityValue = 0
+        legalActionsOfAgent = gameState.getLegalActions(agent)
+        for action in legalActionsOfAgent:
+            successorGameState = gameState.generateSuccessor(agent, action)
+
+            utilityValue += \
+            (1/len(legalActionsOfAgent)) * (self.expectimaxDecision(successorGameState, depth - 1, 0))[0] \
+            if agent == gameState.getNumAgents() - 1 \
+            else \
+            (1/len(legalActionsOfAgent)) * (self.expectimaxDecision(successorGameState, depth, agent + 1))[0]
+
+            randomMove = random.choice(legalActionsOfAgent)
+
+        return utilityValue, randomMove
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
