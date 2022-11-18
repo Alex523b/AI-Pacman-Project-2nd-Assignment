@@ -58,20 +58,11 @@ class ReflexAgent(Agent):
 
         The evaluation function takes in the current and proposed successor
         GameStates (pacman.py) and returns a number, where higher numbers are better.
-
-        The code below extracts some useful information from the state, like the
-        remaining food (newFood) and Pacman position after moving (newPos).
-        newScaredTimes holds the number of moves that each ghost will remain
-        scared because of Pacman having eaten a power pellet.
-
-        Print out these variables to see what you're getting, then combine them
-        to create a masterful evaluation function.
         """
         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPosition = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
 
-        successorGameStateScore = successorGameState.getScore()
         value = successorGameState.getScore()
         if not successorGameState.isLose() and not successorGameState.isWin():
             _, distanceToClosestDot = findClosestEntity(newFood.asList(), newPosition)
@@ -134,13 +125,16 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns the minimax action from the current gameState using self.depth
         and self.evaluationFunction.
         """
-        _, optimalAction = self.minimaxDecision(gameState, self.depth, 0)
+        _, optimalAction = self.minimaxDecision(gameState, 0, self.depth)
         return optimalAction
 
     def reachedTerminalState(self, gameState, depth):
         return gameState.isWin() or gameState.isLose() or depth == 0
 
-    def minimaxDecision(self, gameState, depth, agent):
+    def minimaxDecision(self, gameState, agent, depth):
+        """
+        All agents make optimal decisions; call the appropriate helper functions
+        """
         return self.findMax(gameState, agent, depth) if agent == 0 else self.findMin(gameState, agent, depth)
 
     def findMax(self, gameState, agent, depth):
@@ -152,10 +146,10 @@ class MinimaxAgent(MultiAgentSearchAgent):
             successorGameState = gameState.generateSuccessor(agent, action)
 
             utilityValue, _ = \
-            self.minimaxDecision(successorGameState, depth - 1, 0) \
+            self.minimaxDecision(successorGameState, 0, depth - 1) \
             if agent == gameState.getNumAgents() - 1 \
             else \
-            self.minimaxDecision(successorGameState, depth, agent + 1)
+            self.minimaxDecision(successorGameState, agent + 1, depth)
 
             if maxUtilityValue == None or utilityValue > maxUtilityValue:
                 maxAction = action
@@ -172,10 +166,10 @@ class MinimaxAgent(MultiAgentSearchAgent):
             successorGameState = gameState.generateSuccessor(agent, action)
 
             utilityValue, _ = \
-            self.minimaxDecision(successorGameState, depth - 1, 0) \
+            self.minimaxDecision(successorGameState, 0, depth - 1) \
             if agent == gameState.getNumAgents() - 1 \
             else \
-            self.minimaxDecision(successorGameState, depth, agent + 1)
+            self.minimaxDecision(successorGameState, agent + 1, depth)
 
             if minUtilityValue == None or utilityValue < minUtilityValue:
                 minAction = action
@@ -192,13 +186,13 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
-        _, optimalAction = self.minimaxDecision(gameState, self.depth, 0, None, None);
+        _, optimalAction = self.minimaxDecision(gameState, 0, self.depth, None, None);
         return optimalAction
 
     def reachedTerminalState(self, gameState, depth):
         return gameState.isWin() or gameState.isLose() or depth == 0
 
-    def minimaxDecision(self, gameState, depth, agent, alpha, beta):
+    def minimaxDecision(self, gameState, agent, depth, alpha, beta):
         return self.findMax(gameState, agent, depth, alpha, beta) if agent == 0 else self.findMin(gameState, agent, depth, alpha, beta)
 
     def findMax(self, gameState, agent, depth, alpha, beta):
@@ -210,16 +204,16 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             successorGameState = gameState.generateSuccessor(agent, action)
 
             utilityValue, _ = \
-            self.minimaxDecision(successorGameState, depth - 1, 0, alpha, beta) \
+            self.minimaxDecision(successorGameState, 0, depth - 1, alpha, beta) \
             if agent == gameState.getNumAgents() - 1 \
             else \
-            self.minimaxDecision(successorGameState, depth, agent + 1, alpha, beta)
+            self.minimaxDecision(successorGameState, agent + 1, depth, alpha, beta)
 
             if maxUtilityValue == None or utilityValue > maxUtilityValue:
                 maxAction = action
                 maxUtilityValue = utilityValue
 
-            if beta != None and maxUtilityValue > beta:
+            if beta != None and maxUtilityValue > beta: # Prune condition
                 break
 
             if alpha == None or maxUtilityValue > alpha:
@@ -236,16 +230,16 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             successorGameState = gameState.generateSuccessor(agent, action)
 
             utilityValue, _ = \
-            self.minimaxDecision(successorGameState, depth - 1, 0, alpha, beta) \
+            self.minimaxDecision(successorGameState, 0, depth - 1, alpha, beta) \
             if agent == gameState.getNumAgents() - 1 \
             else \
-            self.minimaxDecision(successorGameState, depth, agent + 1, alpha, beta)
+            self.minimaxDecision(successorGameState, agent + 1, depth, alpha, beta)
 
             if minUtilityValue == None or utilityValue < minUtilityValue:
                 minAction = action
                 minUtilityValue = utilityValue
 
-            if alpha != None and minUtilityValue < alpha:
+            if alpha != None and minUtilityValue < alpha: # Prune condition
                 break
 
             if beta == None or minUtilityValue < beta:
@@ -263,10 +257,13 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         Returns the expectimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        _, action = self.expectimaxDecision(gameState, depth = self.depth, agent = 0)
+        _, action = self.expectimaxDecision(gameState, 0, self.depth)
         return action
 
-    def expectimaxDecision(self, gameState, depth, agent):
+    def expectimaxDecision(self, gameState, agent, depth):
+        """
+        Pac-Man makes optimal decisions (thus, call findMax()), while ghosts don't (hence, call findChance()).
+        """
         return self.findMax(gameState, agent, depth) if agent == 0 else self.findChance(gameState, agent, depth)
 
     def reachedTerminalState(self, gameState, depth):
@@ -281,10 +278,10 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
             successorGameState = gameState.generateSuccessor(agent, action)
 
             utilityValue, _ = \
-            self.expectimaxDecision(successorGameState, depth - 1, 0) \
+            self.expectimaxDecision(successorGameState, 0, depth - 1) \
             if agent == gameState.getNumAgents() - 1 \
             else \
-            self.expectimaxDecision(successorGameState, depth, agent + 1)
+            self.expectimaxDecision(successorGameState, agent + 1, depth)
 
             if maxUtilityValue == None or utilityValue > maxUtilityValue:
                 maxAction = action
@@ -292,41 +289,24 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
         return maxUtilityValue, maxAction
 
-    def findMin(self, gameState, agent, depth):
-        if self.reachedTerminalState(gameState, depth):
-            return self.evaluationFunction(gameState), Directions.STOP
-
-        minUtilityValue = None
-        for action in gameState.getLegalActions(agent):
-            successorGameState = gameState.generateSuccessor(agent, action)
-
-            utilityValue, _ = \
-            self.expectimaxDecision(successorGameState, depth - 1, 0) \
-            if agent == gameState.getNumAgents() - 1 \
-            else \
-            self.expectimaxDecision(successorGameState, depth, agent + 1)
-
-            if minUtilityValue == None or utilityValue < minUtilityValue:
-                minAction = action
-                minUtilityValue  = utilityValue
-
-        return minUtilityValue, minAction
-
-
     def findChance(self, gameState, agent, depth):
         if self.reachedTerminalState(gameState, depth):
             return self.evaluationFunction(gameState), Directions.STOP
 
         utilityValue = 0
         legalActionsOfAgent = gameState.getLegalActions(agent)
+        numberOfLegalActions = len(legalActionsOfAgent)
         for action in legalActionsOfAgent:
             successorGameState = gameState.generateSuccessor(agent, action)
 
+            """
+            An adversary chooses amongst their legal actions uniformly at random
+            """
             utilityValue += \
-            (1/len(legalActionsOfAgent)) * (self.expectimaxDecision(successorGameState, depth - 1, 0))[0] \
+            (1/numberOfLegalActions) * (self.expectimaxDecision(successorGameState, 0, depth - 1))[0] \
             if agent == gameState.getNumAgents() - 1 \
             else \
-            (1/len(legalActionsOfAgent)) * (self.expectimaxDecision(successorGameState, depth, agent + 1))[0]
+            (1/numberOfLegalActions) * (self.expectimaxDecision(successorGameState, agent + 1, depth))[0]
 
             randomMove = random.choice(legalActionsOfAgent)
 
@@ -341,7 +321,6 @@ def betterEvaluationFunction(currentGameState: GameState):
     """
     value = currentGameState.getScore()
     if not currentGameState.isLose() and not currentGameState.isWin():
-        value = currentGameState.getScore()
 
         _, distanceToClosestDot = findClosestEntity(currentGameState.getFood().asList(), currentGameState.getPacmanPosition())
         _, distanceToClosestGhost = findClosestEntity(currentGameState.getGhostPositions(), currentGameState.getPacmanPosition())
@@ -350,6 +329,7 @@ def betterEvaluationFunction(currentGameState: GameState):
         if(currentGameState.getCapsules()):
             _, distanceToClosestCapsule = findClosestEntity(currentGameState.getCapsules(), currentGameState.getPacmanPosition())
             value += 1/distanceToClosestCapsule
+
     return value
 
 # Abbreviation
