@@ -72,14 +72,11 @@ class ReflexAgent(Agent):
         newFood = successorGameState.getFood()
 
         successorGameStateScore = successorGameState.getScore()
-        if successorGameState.isLose():
-            return -abs(successorGameStateScore)
-
-        if successorGameState.isWin():
-            return successorGameStateScore
-        else:
+        value = successorGameState.getScore()
+        if not successorGameState.isLose() and not successorGameState.isWin():
             _, distanceToClosestDot = findClosestDot(newFood.asList(), newPosition)
-            return 1/(distanceToClosestDot) + successorGameStateScore
+            value += 1/distanceToClosestDot
+        return value
 
 def findClosestDot(dots: tuple, currentPosition):
     """
@@ -341,8 +338,18 @@ def betterEvaluationFunction(currentGameState: GameState):
 
     DESCRIPTION: <write something here so we know what you did>
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    value = currentGameState.getScore()
+    if not currentGameState.isLose() and not currentGameState.isWin():
+        value = currentGameState.getScore()
+
+        _, distanceToClosestDot = findClosestDot(currentGameState.getFood().asList(), currentGameState.getPacmanPosition())
+        _, distanceToClosestGhost = findClosestDot(currentGameState.getGhostPositions(), currentGameState.getPacmanPosition())
+
+        value += 1/distanceToClosestDot - distanceToClosestGhost
+        if(currentGameState.getCapsules()):
+            _, distanceToClosestCapsule = findClosestDot(currentGameState.getCapsules(), currentGameState.getPacmanPosition())
+            value += 1/distanceToClosestCapsule
+    return value
 
 # Abbreviation
 better = betterEvaluationFunction
