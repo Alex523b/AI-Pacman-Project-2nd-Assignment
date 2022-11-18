@@ -74,24 +74,25 @@ class ReflexAgent(Agent):
         successorGameStateScore = successorGameState.getScore()
         value = successorGameState.getScore()
         if not successorGameState.isLose() and not successorGameState.isWin():
-            _, distanceToClosestDot = findClosestDot(newFood.asList(), newPosition)
+            _, distanceToClosestDot = findClosestEntity(newFood.asList(), newPosition)
             value += 1/distanceToClosestDot
         return value
 
-def findClosestDot(dots: tuple, currentPosition):
+def findClosestEntity(coordinatesOfEntities: tuple, currentPosition):
     """
-    Utility function for finding closest dot used by evaluationFunction of ReflexAgent
+    This utility function returns the position-coordinates of the closest "entity" and its distance from the current position.
+    "entity" can be a ghost, food, or capsule, since they are represented by coordinates in 2D.
     """
-    positionOfClosestDot = None
-    distanceToClosestDot = None
-    for dot in dots:
-        distance = manhattanDistance(currentPosition, dot)
+    positionOfClosestEntity = None
+    distanceToClosestEntity = None
+    for coordinatesOfEntity in coordinatesOfEntities:
+        distance = manhattanDistance(currentPosition, coordinatesOfEntity)
         
-        if positionOfClosestDot == None or distance < distanceToClosestDot:
-            distanceToClosestDot = distance
-            positionOfClosestDot = dot
+        if positionOfClosestEntity == None or distance < distanceToClosestEntity:
+            distanceToClosestEntity = distance
+            positionOfClosestEntity = coordinatesOfEntity
 
-    return positionOfClosestDot, distanceToClosestDot
+    return positionOfClosestEntity, distanceToClosestEntity
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
@@ -342,12 +343,12 @@ def betterEvaluationFunction(currentGameState: GameState):
     if not currentGameState.isLose() and not currentGameState.isWin():
         value = currentGameState.getScore()
 
-        _, distanceToClosestDot = findClosestDot(currentGameState.getFood().asList(), currentGameState.getPacmanPosition())
-        _, distanceToClosestGhost = findClosestDot(currentGameState.getGhostPositions(), currentGameState.getPacmanPosition())
+        _, distanceToClosestDot = findClosestEntity(currentGameState.getFood().asList(), currentGameState.getPacmanPosition())
+        _, distanceToClosestGhost = findClosestEntity(currentGameState.getGhostPositions(), currentGameState.getPacmanPosition())
 
         value += 1/distanceToClosestDot - distanceToClosestGhost
         if(currentGameState.getCapsules()):
-            _, distanceToClosestCapsule = findClosestDot(currentGameState.getCapsules(), currentGameState.getPacmanPosition())
+            _, distanceToClosestCapsule = findClosestEntity(currentGameState.getCapsules(), currentGameState.getPacmanPosition())
             value += 1/distanceToClosestCapsule
     return value
 
